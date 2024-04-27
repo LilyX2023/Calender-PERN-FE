@@ -12,3 +12,10 @@ export const calendarLoader = async ({params}) => {
     const calendar = await response.json();
     return calendar;
 }
+
+export const eventsLoader = async(params) => {
+    const response = await fetch(`${URL}/calendar/${params.id}/event`)
+    const events = await response.json();
+    return events;
+}
+

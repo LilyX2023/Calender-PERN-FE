@@ -5,7 +5,7 @@ import {
 } from 'react-router-dom';
 import App from './App';
 import Landing from './pages/Calendar';
-import {calendarsLoader} from './loaders';
+import {calendarsLoader, calendarLoader, eventsLoader} from './loaders';
 
 
 const router = createBrowserRouter(
