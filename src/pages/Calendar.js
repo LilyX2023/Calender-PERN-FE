@@ -4,7 +4,10 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from "@fullcalendar/interaction";
+import rrulePlugin from '@fullcalendar/rrule';
 import { useLoaderData } from "react-router-dom";
+
+
 
 
 const Landing = () => {
@@ -30,17 +33,28 @@ const Landing = () => {
             const response = await fetch(`${URL}/calendar/${calendarId}/event`);
             const eventsData = await response.json();
     
-            const formattedEvents = eventsData.map(event => ({
-                title: event.title,
-                description: event.description,
-                start: new Date(event.start_time), // Format start time
-                end: new Date(event.end_time), // Format end time
-                location: event.location,
-                color: event.color,
-                recurring: event.recurring,
-                recurrence_pattern: event.recurrence_pattern,
-            }));
+            console.log("Events Data from Backend:", eventsData); // Log the data received from the backend
+            const formattedEvents = eventsData.map(event => {
+                const formattedEvent = {
+                    title: event.title,
+                    description: event.description,
+                    start: new Date(event.start_time), // Format start time
+                    end: new Date(event.end_time), // Format end time
+                    location: event.location,
+                    color: event.color,
+                    recurring: event.recurring,
+                };
+    
+                if (event.recurring) {
+                    formattedEvent.rrule = event.rrule;
+                }
+    
+                return formattedEvent;
+            });
+    
+            console.log("Formatted Events:", formattedEvents); // Log the formatted events
             setEvents(formattedEvents);
+            console.log(formattedEvents)
         } catch (error) {
             console.error('Error fetching events:', error);
         }
@@ -60,7 +74,7 @@ const Landing = () => {
 
             {selectedCalendar && (
                 <FullCalendar
-                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, rrulePlugin]}
                     initialView={'timeGridWeek'}
                     headerToolbar={{
                         start: 'today prev,next',
