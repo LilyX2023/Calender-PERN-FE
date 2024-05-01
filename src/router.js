@@ -1,22 +1,25 @@
 import {
-    createBrowserRouter, //allows us to define paths in react router (the url, our loaders, our actions)
-    createRoutesFromElements, //is a helper function that that allows paths to be create using Element for example we will be using <Route>
-    Route //will be put into the helper 
+    createBrowserRouter,
+    createRoutesFromElements,
+    Route
 } from 'react-router-dom';
 import App from './App';
 import Landing from './pages/Calendar';
-import {calendarsLoader, calendarLoader, eventsLoader} from './loaders';
-
+import Event from './pages/Event'; // Import the Event component
+import { calendarsLoader, calendarLoader, eventLoader } from './loaders';
+import { createAction, deleteAction, updateAction } from "./actions";
 
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route path='/' element={<App />}>
-            <Route path='' element={<Landing></Landing>} loader={calendarsLoader}/>
-            <Route path='create'/> {/*this is an action and doesnt render an element*/}
-            <Route path='update/:id'/> {/*this is an action and doesnt render an element*/}
-            <Route path='delete/:id'/> {/*this is an action and doesnt render an element*/}
+            <Route path='' element={<Landing />} loader={calendarsLoader} />
+            {/* Define route for the event show page */}
+            <Route path='/calendar/:calendar_id/event/:event_id' element={<Event />} loader={eventLoader} />
+            <Route path='create' action={createAction} />
+            <Route path='update/:event_id' action={updateAction} />
+            <Route path='/calendar/:calendar_id/event/delete/:event_id' action={deleteAction} />
         </Route>
     )
-)
+);
 
 export default router;

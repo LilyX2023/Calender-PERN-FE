@@ -24,7 +24,7 @@ export const updateAction = async ({ request, params }) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(updatedProject)
+        body: JSON.stringify(updatedEvent)
     })
 
     return redirect('/') //go back to the landing page 
@@ -32,7 +32,7 @@ export const updateAction = async ({ request, params }) => {
 
 
 //Create action
-export const createAction = async ({ request }) => {
+export const createAction = async ({ request, params }) => {
     const formData = await request.formData() //the request object has data for forms. We can access it. 
     const { calendar_id } = params;
     const createdEvent = {
