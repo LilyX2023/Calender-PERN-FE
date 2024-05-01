@@ -1,7 +1,11 @@
 // EventForm.js
 import React, { useState } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import { DialogContent, DialogActions, Button } from '@mui/material'; // Add Button import
 
 const EventForm = ({ onSubmit }) => {
+  const [open, setOpen] = useState(false); // State to control dialog visibility
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [start_time, setStart] = useState('');
@@ -43,9 +47,15 @@ const EventForm = ({ onSubmit }) => {
     setRruleFreq('weekly');
     setRruleUntil('');
     setRruleDtstart('');
+    setOpen(false); // Close the dialog after submission
   };
 
   return (
+    <>
+    <Button variant="outlined" onClick={() => setOpen(true)}>Add Event</Button>
+    <Dialog open={open} onClose={() => setOpen(false)}>
+    <DialogTitle>Add Event</DialogTitle>
+    <DialogContent>
     <form onSubmit={handleSubmit}>
       <label>
         Title:
@@ -96,8 +106,14 @@ const EventForm = ({ onSubmit }) => {
           
         </>
       )}
-      <button type="submit">Add Event</button>
+      <Button type="submit" color="primary">Add Event</Button>
     </form>
+    </DialogContent>
+    <DialogActions>
+          <Button onClick={() => setOpen(false)} color="primary">Cancel</Button>
+    </DialogActions>
+    </Dialog>
+    </>
   );
 };
 

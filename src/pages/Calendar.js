@@ -7,7 +7,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import rrulePlugin from '@fullcalendar/rrule';
 import { useLoaderData, useNavigate } from "react-router-dom";
 import EventForm from './EventForm'; // Import the EventForm component
-import { createAction } from '../actions';
+import { deleteAction } from '../actions';
 
 
 
