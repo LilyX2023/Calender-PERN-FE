@@ -7,7 +7,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import rrulePlugin from '@fullcalendar/rrule';
 import { useLoaderData, useNavigate, Form } from "react-router-dom";
 import EventForm from './EventForm'; // Import the EventForm component
-import { deleteAction } from '../actions';
+import { deleteAction, updateAction } from '../actions';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material'; // Import Material UI components
 import moment from 'moment'; // Import Moment.js
 
@@ -62,6 +62,7 @@ const Landing = () => {
             
             const formattedEvents = eventsData.map(event => {
                 const formattedEvent = {
+                    event_id: event.event_id,
                     title: event.title,
                     description: event.description,
                     start: event.start_time,
@@ -85,6 +86,7 @@ const Landing = () => {
 
     // Event click handler
     const handleEventClick = (info) => {
+        console.log('info',info)
         setSelectedEvent(info.event);
         setShowEventDialog(true);
     };
@@ -126,6 +128,14 @@ const Landing = () => {
                 <Dialog open={showEventDialog} onClose={handleCloseEventDialog}>
                     <DialogTitle>{selectedEvent && selectedEvent.title}</DialogTitle>
                     <DialogContent>
+                    <Form action={selectedEvent ? `/calendar/${selectedCalendar}/event/update/${selectedEvent.extendedProps.event_id}` : ""} method="POST">
+                        {selectedEvent && (
+                            <label htmlFor="title">
+                                <input type="text" name="title" id="title" defaultValue={selectedEvent.title}/>
+                                <button type="submit">Update</button>
+                            </label>
+                        )}
+                    </Form>
                         <p>{selectedEvent && selectedEvent.title}</p>
                         <p>{selectedEvent && selectedEvent.description}</p>
                         <p>{/* Add other event details here */}</p>

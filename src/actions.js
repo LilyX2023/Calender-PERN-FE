@@ -6,6 +6,7 @@ const URL = process.env.REACT_APP_URL;
 export const updateAction = async ({ request, params }) => {
     const formData = await request.formData() //the request object has data for forms. We can access it.
     const { calendar_id, event_id } = params; // Extract calendar_id and params.event_id
+    console.log(params);
     const updatedEvent = {
         title: formData.get('title'), 
         description: formData.get('description'), 
