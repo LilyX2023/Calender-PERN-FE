@@ -16,7 +16,7 @@ const router = createBrowserRouter(
             {/* Define route for the event show page */}
             <Route path='/calendar/:calendar_id/event/:event_id' element={<Event />} loader={eventLoader} />
             <Route path='create' action={createAction} />
-            <Route path='update/:event_id' action={updateAction} />
+            <Route path='/calendar/:calendar_id/event/update/:event_id' action={updateAction} />
             <Route path='/calendar/:calendar_id/event/delete/:event_id' action={deleteAction} />
         </Route>
     )

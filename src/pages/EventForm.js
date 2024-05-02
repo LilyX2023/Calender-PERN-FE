@@ -49,7 +49,6 @@ const EventForm = ({ onSubmit }) => {
     setRruleDtstart('');
     setOpen(false); // Close the dialog after submission
   };
-
   return (
     <>
     <Button variant="outlined" onClick={() => setOpen(true)}>Add Event</Button>
