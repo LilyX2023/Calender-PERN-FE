@@ -62,13 +62,14 @@ const Landing = () => {
             
             const formattedEvents = eventsData.map(event => {
                 const formattedEvent = {
+                    calendar_id: event.calendar_id,
                     event_id: event.event_id,
                     title: event.title,
                     description: event.description,
-                    start: event.start_time,
-                    end: event.end_time, 
+                    start: event.start_time, // Convert to Date object
+                    end: event.end_time, // Convert to Date object
                     location: event.location,
-                    color: event.color,
+                    color: event.color || "#000000",
                     recurring: event.recurring,
                 };
                 if (event.recurring) {
@@ -84,13 +85,58 @@ const Landing = () => {
         }
     };
     //update event
+    const handleUpdateEvent = async () => {
+        try {
+            const updatedEventData = {
+                calendar_id: selectedEvent.extendedProps.calendar_id,
+                title: selectedEvent.title,
+                description: selectedEvent.extendedProps.description,
+                start_time: new Date(selectedEvent.start).toISOString(),
+                end_time: new Date(selectedEvent.end).toISOString(),
+                location: selectedEvent.extendedProps.location,
+                color: selectedEvent.backgroundColor,
+                recurring: selectedEvent.recurring,
+            };
+            if (selectedEvent.recurring) {
+                updatedEventData.rrule = selectedEvent.rrule;
+            }
 
+            await fetch(`${URL}/calendar/${selectedCalendar}/event/${selectedEvent.extendedProps.event_id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedEventData),
+            });
+            console.log(updatedEventData)
+
+            fetchEvents(selectedCalendar);
+            setShowEventDialog(false);
+        } catch (error) {
+            console.error('Error updating event:', error);
+        }
+    };
+
+    //delete event
+    const handleDeleteEvent = async () => {
+        try {
+            await fetch(`${URL}/calendar/${selectedCalendar}/event/${selectedEvent.extendedProps.event_id}`, {
+                method: 'DELETE',
+            });
+
+            fetchEvents(selectedCalendar);
+            setShowEventDialog(false);
+        } catch (error) {
+            console.error('Error deleting event:', error);
+        }
+    };
 
     // Event click handler
     const handleEventClick = (info) => {
-        console.log('info',info)
+        console.log('selectedEvent',selectedEvent)
         setSelectedEvent(info.event);
-        setShowEventDialog(true);
+        setShowEventDialog(true)
+        ;
     };
     // Toggle visibility of recurring fields
     const handleRecurringCheckboxChange = (e) => {
@@ -134,7 +180,7 @@ const Landing = () => {
                 <Dialog open={showEventDialog} onClose={handleCloseEventDialog}>
                     <DialogTitle>{selectedEvent && selectedEvent.title}</DialogTitle>
                     <DialogContent>
-                    <Form>
+                    <Form onSubmit={handleUpdateEvent}>
                         {selectedEvent && (
                     <>
                         <label htmlFor="title">
@@ -143,15 +189,15 @@ const Landing = () => {
                         </label>
                         <label htmlFor="description">
                             Description:
-                            <textarea name="description" id="description" defaultValue={selectedEvent.description}/>
+                            <textarea name="description" id="description" defaultValue={selectedEvent.extendedProps.description}/>
                         </label>
                         <label htmlFor="start">
                             Start:
-                            <input type="datetime-local" name="start_time" id="start_time" defaultValue={selectedEvent.start_time}/>
+                            <input type="datetime-local" name="start_time" id="start_time" defaultValue={selectedEvent.start}/>
                         </label>
                         <label htmlFor="end">
                             End:
-                            <input type="datetime-local" name="end_time" id="end_time" defaultValue={selectedEvent.end_time}/>
+                            <input type="datetime-local" name="end_time" id="end_time" defaultValue={selectedEvent.end}/>
                         </label>
                         <label htmlFor="location">
                             Location:
@@ -159,7 +205,7 @@ const Landing = () => {
                         </label>
                         <label htmlFor="color">
                             Color:
-                            <input type="color" name="color" id="color" defaultValue={selectedEvent.color}/>
+                            <input type="color" name="color" id="color" defaultValue={selectedEvent.color || "#000000"} />
                         </label>
 
                         <label htmlFor="recurring">
@@ -189,6 +235,7 @@ const Landing = () => {
                             </>
                         )}
                         <button type="submit">Update</button>
+                        <Button onClick={handleDeleteEvent} color="error">Delete</Button>
                     </>
                         )}
                     </Form>
