@@ -21,11 +21,11 @@ const Landing = () => {
     //edit the event_id and update event properties
     const [updatedEventId, setUpdatedEventId] = useState(null);
     //update  event_title and etc:
-    const [updatedTitle, setupdatedTitle] = useState('');
-    const [updatedDescription, setupdatedDescription] = useState('');
+    const [updatedTitle, setUpdatedTitle] = useState('');
+    const [updatedDescription, setUpdatedDescription] = useState('');
     const [updatedStart_time, setUpdatedStart] = useState('');
     const [updatedEnd_time, setUpdatedEnd] = useState('');
-    const [updatedLocation, setUpdatntedLocation] = useState('');
+    const [updatedLocation, setUpdatedLocation] = useState('');
     const [updatedEventcolor, setUpdatedEventcolor] = useState('#000000'); // Default color
     const [updatedRecurring, setUpdatedRecurring] = useState(false);
     const [updatedRruleFreq, setUpdatedRruleFreq] = useState('weekly');
@@ -101,83 +101,137 @@ const Landing = () => {
     };
 
     //Function to set up editing of a event
-    const handleEdit = (id) =>{
-        const eventToEdit = events.find(event=> event.event_id === id);
-        setUpdatedEventId(id);
-        setupdatedTitle(eventToEdit.title);
-        setupdatedDescription(eventToEdit.description);
-        setUpdatedStart(eventToEdit.start);
-        
+// Now the handleEdit function should work with the eventDetails structured as needed:
+    const handleEdit = (event) => {
+        setUpdatedEventId(event.event_id);
+        setUpdatedTitle(event.title);
+        setUpdatedDescription(event.description);
+        setUpdatedStart(event.start.toISOString().slice(0, -8)); // Format for datetime-local
+        setUpdatedEnd(event.end.toISOString().slice(0, -8)); // Format for datetime-local
+        setUpdatedLocation(event.location);
+        setUpdatedEventcolor(event.backgroundColor || '#000000');
+        setUpdatedRecurring(event.recurring);
 
+        if (event.recurring && event.rrule) {
+            setUpdatedRruleFreq(event.rrule.freq);
+            setUpdatedRruleUntil(event.rrule.until);
+            setUpdatedRruleDtstart(event.rrule.dtstart);
+        }
+    };
 
-    }
-    //update event
-    const handleUpdateEvent = async () => {
-        console.log('selectedEvent:', selectedEvent);
+   // Update event
+    const handleUpdateEvent = async (event_id) => {
+        console.log('Selected Event:', selectedEvent);
+        console.log("Updated Start Time:", updatedStart_time);
+        console.log("Updated End Time:", updatedEnd_time);
+
         try {
-            
-            const updatedEventData = {
-                calendar_id: selectedEvent._def.extendedProps.calendar_id,
-                event_id:selectedEvent._def.extendedProps.event_id,
-                title: selectedEvent._def.title,
-                description: selectedEvent._def.extendedProps.description,
-                start_time: selectedEvent._instance.range.start.toISOString(),
-                end_time: selectedEvent._instance.range.end.toISOString(),
-                location: selectedEvent._def.extendedProps.location,
-                eventcolor: selectedEvent._def.ui.backgroundColor,
-                recurring: selectedEvent._def.extendedProps.recurring,
-            };
-            if (selectedEvent._def.extendedProps.recurring) {
-                updatedEventData.rrule = {
-                    freq: selectedEvent._def.recurringDef.typeData.
-                    rruleSet._rrule.freq,
-                    until: selectedEvent._def.recurringDef.typeData.
-                    rruleSet._rrule.until,
-                    dtstart: selectedEvent._def.recurringDef.typeData.
-                    rruleSet._rrule.dtstart
-                };
-            
-            }else {
-                updatedEventData.rrule = null; // Add rrule as null when recurring is false
+            const startDate = new Date(updatedStart_time);
+            const endDate = new Date(updatedEnd_time);
+
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                console.error("Invalid date provided");
+                return; // Exit the function if dates are not valid
             }
 
-            await fetch(`${URL}/calendar/${selectedCalendar}/event/${selectedEvent.extendedProps.event_id}`, {
+            const updatedEventData = {
+                calendar_id: selectedEvent._def.extendedProps.calendar_id,
+                event_id: selectedEvent._def.extendedProps.event_id,
+                title: updatedTitle,
+                description: updatedDescription,
+                start_time: startDate.toISOString(),
+                end_time: endDate.toISOString(),
+                location: updatedLocation,
+                eventcolor: updatedEventcolor,
+                recurring: updatedRecurring,
+                rrule: updatedRecurring ? {
+                    freq: updatedRruleFreq,
+                    until: new Date(updatedRruleUntil).toISOString(),
+                    dtstart: new Date(updatedRruleDtstart).toISOString()
+                } : null
+            };
+
+            await fetch(`${URL}/calendar/${selectedCalendar}/event/${selectedEvent._def.extendedProps.event_id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(updatedEventData),
             });
-            console.log('updated_event', updatedEventData)
 
+            setEvents(events.map(event => {
+                if (event.event_id === event_id) {
+                    return {
+                        ...event,
+                        title: updatedTitle,
+                        description: updatedDescription,
+                        start_time: updatedStart_time,
+                        end_time: updatedEnd_time,
+                        location: updatedLocation,
+                        eventcolor: updatedEventcolor,
+                        recurring: updatedRecurring,
+                        freq: updatedRruleFreq,
+                        until: updatedRruleUntil,
+                        dtstart: updatedRruleDtstart,
+                    };
+                }
+                return event;
+            }));
+
+            setUpdatedEventId(null);
+            setUpdatedTitle('');
+            setUpdatedDescription('');
+            setUpdatedStart('');
+            setUpdatedEnd('');
+            setUpdatedLocation('');
+            setUpdatedEventcolor('#000000');
+            setUpdatedRecurring(false);
+            setUpdatedRruleFreq('weekly');
+            setUpdatedRruleUntil('');
+            setUpdatedRruleDtstart('');
+
+            console.log('Updated event data', updatedEventData);
+            // Fetch events, close dialog after submit
             fetchEvents(selectedCalendar);
             setShowEventDialog(false);
         } catch (error) {
             console.error('Error updating event:', error);
         }
     };
+        //delete event
+        const handleDeleteEvent = async () => {
+            try {
+                await fetch(`${URL}/calendar/${selectedCalendar}/event/${selectedEvent.extendedProps.event_id}`, {
+                    method: 'DELETE',
+                });
 
-    //delete event
-    const handleDeleteEvent = async () => {
-        try {
-            await fetch(`${URL}/calendar/${selectedCalendar}/event/${selectedEvent.extendedProps.event_id}`, {
-                method: 'DELETE',
-            });
+                fetchEvents(selectedCalendar);
+                setShowEventDialog(false);
+            } catch (error) {
+                console.error('Error deleting event:', error);
+            }
+        };
 
-            fetchEvents(selectedCalendar);
-            setShowEventDialog(false);
-        } catch (error) {
-            console.error('Error deleting event:', error);
-        }
-    };
 
     // Event click handler
     const handleEventClick = (info) => {
-        console.log('selectedEvent:', selectedEvent);
-        setSelectedEvent(info.event);
-        setShowEventDialog(true)
-        ;
+        console.log('Selected Event:', info.event);
+        const eventDetails = {
+            event_id: info.event.id, // Assuming id is stored directly in the event object
+            title: info.event.title,
+            description: info.event.extendedProps.description, // Assuming description is stored in extendedProps
+            start: info.event.start,
+            end: info.event.end,
+            location: info.event.extendedProps.location,
+            backgroundColor: info.event.backgroundColor, // Ensure this matches how color is stored
+            recurring: info.event.extendedProps.recurring, // Assuming recurring status is stored in extendedProps
+            rrule: info.event.extendedProps.rrule // Assuming rrule details are stored in extendedProps
+        };
+
+        handleEdit(eventDetails);
+        setShowEventDialog(true);
     };
+
     // Toggle visibility of recurring fields
     const handleRecurringCheckboxChange = (e) => {
         const isChecked = e.target.checked;
@@ -230,11 +284,11 @@ const Landing = () => {
                                 <>
                                     <label htmlFor="title">
                                         Title:
-                                        <input type="text" name="title" id="title" defaultValue={selectedEvent.title} />
+                                        <input type="text" name="title" id="title" defaultValue={selectedEvent.title} onChange={(e) => setUpdatedTitle(e.target.value)}/>
                                     </label>
                                     <label htmlFor="description">
                                         Description:
-                                        <textarea name="description" id="description" defaultValue={selectedEvent.extendedProps.description} />
+                                        <textarea name="description" id="description" defaultValue={selectedEvent.extendedProps.description} onChange={(e) => setUpdatedDescription(e.target.value)}/>
                                     </label>
                                     <label htmlFor="start">
                                         Start:
@@ -246,7 +300,8 @@ const Landing = () => {
                                                 new Date(selectedEvent.start.getTime() - selectedEvent.start.getTimezoneOffset() * 60000)
                                                     .toISOString()
                                                     .slice(0, -8)
-                                                : ''} 
+                                                : ''}
+                                                onChange={(e) => setUpdatedStart(e.target.value)} 
                                         />
                                     </label>
                                     <label htmlFor="end">
@@ -260,61 +315,76 @@ const Landing = () => {
                                                     .toISOString()
                                                     .slice(0, -8)
                                                 : ''} 
+                                                onChange={(e) => setUpdatedEnd(e.target.value)} 
                                         />
                                     </label>
                                     <label htmlFor="location">
                                         Location:
-                                        <input type="text" name="location" id="location" defaultValue={selectedEvent.extendedProps.location} />
+                                        <input type="text" name="location" id="location" defaultValue={selectedEvent.extendedProps.location}                                  
+                                        onChange={(e) => setUpdatedLocation(e.target.value)}/>
                                     </label>
                                     <label htmlFor="backgroundColor">
                                         Color:
                                         <input type="color" name="eventcolor" id="eventcolor" defaultValue={selectedEvent._def.ui.backgroundColor}
+                                        onChange={(e) => setUpdatedEventcolor(e.target.value)}
                                         />
                                     </label>
 
                                     <label htmlFor="recurring">
                                         Recurring:
-                                        <input type="checkbox" name="recurring" id="recurring" checked={selectedEvent.extendedProps.recurring} onChange={handleRecurringCheckboxChange} />
+                                        <input type="checkbox" name="recurring" id="recurring" checked={selectedEvent.extendedProps.recurring}
+                                         onChange={(e) => {
+                                            setUpdatedRecurring(e.target.checked); // Call setUpdatedRecurring with the checked value
+                                            handleRecurringCheckboxChange(e); // Call handleRecurringCheckboxChange function
+                                        }}
+                                        />
                                     </label>
                                     {showRecurringFields && (
                                         <>
-                                            <label htmlFor="rruleFreq">
+                                            <label htmlFor="freq">
                                                 Frequency:
-                                                <select name="rruleFreq" id="rruleFreq" defaultValue={selectedEvent.rruleFreq}>
+                                                <select name="freq" id="freq" defaultValue={selectedEvent.selectedEvent._def.recurringDef.typeData.rruleSet._rrule.freq} 
+                                                onChange={(e) => setUpdatedRruleFreq(e.target.value)}>
                                                     <option value="weekly">Weekly</option>
                                                     <option value="monthly">Monthly</option>
                                                     <option value="yearly">Yearly</option>
                                                 </select>
                                             </label>
-                                            <label htmlFor="rruleUntil">
+                                            <label htmlFor="until">
                                                 Until:
                                                 <input 
                                                     type="datetime-local" 
-                                                    name="rruleUntil" 
-                                                    id="rruleUntil" 
-                                                    defaultValue={selectedEvent && selectedEvent.rruleUntil ? 
-                                                        new Date(selectedEvent.rruleUntil.getTime() - selectedEvent.rruleUntil.getTimezoneOffset() * 60000)
+                                                    name="until" 
+                                                    id="until" 
+                                                    defaultValue={selectedEvent && selectedEvent._def.recurringDef.typeData.
+                                                        rruleSet._rrule.until ? 
+                                                        new Date(selectedEvent._def.recurringDef.typeData.
+                                                            rruleSet._rrule.until.getTime() - selectedEvent._def.recurringDef.typeData.rruleSet._rrule.until.getTimezoneOffset() * 60000)
                                                             .toISOString()
                                                             .slice(0, -8)
                                                         : ''} 
+                                                        onChange={(e) => setUpdatedRruleUntil(e.target.value)}
                                                 />
                                             </label>
-                                            <label htmlFor="rruleDtstart">
+                                            <label htmlFor="dtstart">
                                                 Start Date:
                                                 <input 
                                                     type="datetime-local" 
-                                                    name="rruleDtstart" 
-                                                    id="rruleDtstart" 
-                                                    defaultValue={selectedEvent && selectedEvent.rruleDtstart ? 
-                                                        new Date(selectedEvent.rruleDtstart.getTime() - selectedEvent.rruleDtstart.getTimezoneOffset() * 60000)
+                                                    name="dtstart" 
+                                                    id="dtstart" 
+                                                    defaultValue={selectedEvent && selectedEvent._def.recurringDef.typeData.
+                                                        rruleSet._rrule.dtstart ? 
+                                                        new Date(selectedEvent._def.recurringDef.typeData.
+                                                            rruleSet._rrule.dtstart.getTime() - selectedEvent._def.recurringDef.typeData.rruleSet._rrule.dtstart.getTimezoneOffset() * 60000)
                                                             .toISOString()
                                                             .slice(0, -8)
-                                                        : ''} 
+                                                        : ''}
+                                                        onChange={(e) => setUpdatedRruleDtstart(e.target.value)}
                                                 />
                                             </label>
                                         </>
                                     )}
-                                    <Button type="submit">Update</Button>
+                                    <Button onClick={() => handleUpdateEvent(selectedEvent.event_id)}>Update</Button>
                                     <Button onClick={handleDeleteEvent} color="error">Delete</Button>
                                 </>
                             )}
