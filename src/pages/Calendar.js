@@ -18,6 +18,20 @@ const Landing = () => {
     const [showEventDialog, setShowEventDialog] = useState(false); // State to control event dialog visibility
     const [selectedEvent, setSelectedEvent] = useState(null); // State to store selected event details
     const [showRecurringFields, setShowRecurringFields] = useState(false); // State to control visibility of recurring fields
+    //edit the event_id and update event properties
+    const [updatedEventId, setUpdatedEventId] = useState(null);
+    //update  event_title and etc:
+    const [updatedTitle, setupdatedTitle] = useState('');
+    const [updatedDescription, setupdatedDescription] = useState('');
+    const [updatedStart_time, setUpdatedStart] = useState('');
+    const [updatedEnd_time, setUpdatedEnd] = useState('');
+    const [updatedLocation, setUpdatntedLocation] = useState('');
+    const [updatedEventcolor, setUpdatedEventcolor] = useState('#000000'); // Default color
+    const [updatedRecurring, setUpdatedRecurring] = useState(false);
+    const [updatedRruleFreq, setUpdatedRruleFreq] = useState('weekly');
+    const [updatedRruleUntil, setUpdatedRruleUntil] = useState('');
+    const [updatedRruleDtstart, setUpdatedRruleDtstart] = useState('');
+  
 
     const URL = process.env.REACT_APP_URL;
 
@@ -85,6 +99,18 @@ const Landing = () => {
             console.error('Error fetching events:', error);
         }
     };
+
+    //Function to set up editing of a event
+    const handleEdit = (id) =>{
+        const eventToEdit = events.find(event=> event.event_id === id);
+        setUpdatedEventId(id);
+        setupdatedTitle(eventToEdit.title);
+        setupdatedDescription(eventToEdit.description);
+        setUpdatedStart(eventToEdit.start);
+        
+
+
+    }
     //update event
     const handleUpdateEvent = async () => {
         console.log('selectedEvent:', selectedEvent);
