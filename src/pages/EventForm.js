@@ -11,7 +11,7 @@ const EventForm = ({ onSubmit }) => {
   const [start_time, setStart] = useState('');
   const [end_time, setEnd] = useState('');
   const [location, setLocation] = useState('');
-  const [color, setColor] = useState('#000000'); // Default color
+  const [eventColor, seteventColor] = useState('#000000'); // Default color
   const [recurring, setRecurring] = useState(false);
   const [rruleFreq, setRruleFreq] = useState('weekly');
   const [rruleUntil, setRruleUntil] = useState('');
@@ -32,7 +32,7 @@ const EventForm = ({ onSubmit }) => {
       start_time,
       end_time,
       location,
-      color,
+      eventColor,
       recurring,
       rrule
     });
@@ -42,7 +42,7 @@ const EventForm = ({ onSubmit }) => {
     setStart('');
     setEnd('');
     setLocation('');
-    setColor('#000000'); // Reset color to default
+    seteventColor('#000000'); // Reset color to default
     setRecurring(false);
     setRruleFreq('weekly');
     setRruleUntil('');
@@ -78,7 +78,7 @@ const EventForm = ({ onSubmit }) => {
       </label>
       <label>
         Color:
-        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
+        <input type="color" value={eventColor} onChange={(e) => seteventColor(e.target.value)} />
       </label>
       <label>
         Recurring:

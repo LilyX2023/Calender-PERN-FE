@@ -12,7 +12,7 @@ import { createAction, deleteAction, updateAction } from "./actions";
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route path='/' element={<App />}>
-            <Route path='' element={<Landing />} loader={calendarsLoader} />
+            <Route path='/calendar' element={<Landing />} loader={calendarsLoader} />
             {/* Define route for the event show page */}
             <Route path='/calendar/:calendar_id/event/:event_id' element={<Event />} loader={eventLoader} />
             <Route path='create' action={createAction} />

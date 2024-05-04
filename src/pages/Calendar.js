@@ -18,7 +18,7 @@ const Landing = () => {
     const [showEventDialog, setShowEventDialog] = useState(false); // State to control event dialog visibility
     const [selectedEvent, setSelectedEvent] = useState(null); // State to store selected event details
     const [showRecurringFields, setShowRecurringFields] = useState(false); // State to control visibility of recurring fields
-    const navigate = useNavigate();// function to navigate to edit page for event
+
     const URL = process.env.REACT_APP_URL;
 
     //Use useEffect to get data from seleted calendar
@@ -39,6 +39,8 @@ const Landing = () => {
           formData.calendar_id = selectedCalendar;
           formData.start_time = new Date(formData.start_time).toISOString();
           formData.end_time = new Date(formData.end_time).toISOString();
+          formData.eventcolor = formData.backgroundColor; // Set eventColor as backgroundColor
+          delete formData.backgroundColor; // Remove backgroundColor from formData
           //console.log(formData)
                await fetch(`${URL}/calendar/${selectedCalendar}/event`, {
                 method: 'POST',
@@ -66,10 +68,10 @@ const Landing = () => {
                     event_id: event.event_id,
                     title: event.title,
                     description: event.description,
-                    start: event.start_time, // Convert to Date object
-                    end: event.end_time, // Convert to Date object
+                    start:new Date(event.start_time), // Convert to Date object
+                    end: new Date(event.end_time), // Convert to Date object
                     location: event.location,
-                    color: event.color || "#000000",
+                    backgroundColor: event.eventcolor || "#000000",
                     recurring: event.recurring,
                 };
                 if (event.recurring) {
@@ -78,7 +80,6 @@ const Landing = () => {
     
                 return formattedEvent;
             });
-          
             setEvents(formattedEvents);
         } catch (error) {
             console.error('Error fetching events:', error);
@@ -86,19 +87,32 @@ const Landing = () => {
     };
     //update event
     const handleUpdateEvent = async () => {
+        console.log('selectedEvent:', selectedEvent);
         try {
+            
             const updatedEventData = {
-                calendar_id: selectedEvent.extendedProps.calendar_id,
-                title: selectedEvent.title,
-                description: selectedEvent.extendedProps.description,
-                start_time: new Date(selectedEvent.start).toISOString(),
-                end_time: new Date(selectedEvent.end).toISOString(),
-                location: selectedEvent.extendedProps.location,
-                color: selectedEvent.backgroundColor,
-                recurring: selectedEvent.recurring,
+                calendar_id: selectedEvent._def.extendedProps.calendar_id,
+                event_id:selectedEvent._def.extendedProps.event_id,
+                title: selectedEvent._def.title,
+                description: selectedEvent._def.extendedProps.description,
+                start_time: selectedEvent._instance.range.start.toISOString(),
+                end_time: selectedEvent._instance.range.end.toISOString(),
+                location: selectedEvent._def.extendedProps.location,
+                eventcolor: selectedEvent._def.ui.backgroundColor,
+                recurring: selectedEvent._def.extendedProps.recurring,
             };
-            if (selectedEvent.recurring) {
-                updatedEventData.rrule = selectedEvent.rrule;
+            if (selectedEvent._def.extendedProps.recurring) {
+                updatedEventData.rrule = {
+                    freq: selectedEvent._def.recurringDef.typeData.
+                    rruleSet._rrule.freq,
+                    until: selectedEvent._def.recurringDef.typeData.
+                    rruleSet._rrule.until,
+                    dtstart: selectedEvent._def.recurringDef.typeData.
+                    rruleSet._rrule.dtstart
+                };
+            
+            }else {
+                updatedEventData.rrule = null; // Add rrule as null when recurring is false
             }
 
             await fetch(`${URL}/calendar/${selectedCalendar}/event/${selectedEvent.extendedProps.event_id}`, {
@@ -108,7 +122,7 @@ const Landing = () => {
                 },
                 body: JSON.stringify(updatedEventData),
             });
-            console.log(updatedEventData)
+            console.log('updated_event', updatedEventData)
 
             fetchEvents(selectedCalendar);
             setShowEventDialog(false);
@@ -133,14 +147,19 @@ const Landing = () => {
 
     // Event click handler
     const handleEventClick = (info) => {
-        console.log('selectedEvent',selectedEvent)
+        console.log('selectedEvent:', selectedEvent);
         setSelectedEvent(info.event);
         setShowEventDialog(true)
         ;
     };
     // Toggle visibility of recurring fields
     const handleRecurringCheckboxChange = (e) => {
-        setShowRecurringFields(e.target.checked);
+        const isChecked = e.target.checked;
+        setShowRecurringFields(isChecked);
+        setSelectedEvent(prevEvent => ({
+            ...prevEvent,
+            recurring: isChecked
+        }));
     };
 
     // Close event dialog
@@ -180,70 +199,105 @@ const Landing = () => {
                 <Dialog open={showEventDialog} onClose={handleCloseEventDialog}>
                     <DialogTitle>{selectedEvent && selectedEvent.title}</DialogTitle>
                     <DialogContent>
-                    <Form onSubmit={handleUpdateEvent}>
-                        {selectedEvent && (
-                    <>
-                        <label htmlFor="title">
-                            Title:
-                            <input type="text" name="title" id="title" defaultValue={selectedEvent.title}/>
-                        </label>
-                        <label htmlFor="description">
-                            Description:
-                            <textarea name="description" id="description" defaultValue={selectedEvent.extendedProps.description}/>
-                        </label>
-                        <label htmlFor="start">
-                            Start:
-                            <input type="datetime-local" name="start_time" id="start_time" defaultValue={selectedEvent.start}/>
-                        </label>
-                        <label htmlFor="end">
-                            End:
-                            <input type="datetime-local" name="end_time" id="end_time" defaultValue={selectedEvent.end}/>
-                        </label>
-                        <label htmlFor="location">
-                            Location:
-                            <input type="text" name="location" id="location" defaultValue={selectedEvent.location}/>
-                        </label>
-                        <label htmlFor="color">
-                            Color:
-                            <input type="color" name="color" id="color" defaultValue={selectedEvent.color || "#000000"} />
-                        </label>
+                        <Form onSubmit={handleUpdateEvent}>
+                            {selectedEvent && (
+                                <>
+                                    <label htmlFor="title">
+                                        Title:
+                                        <input type="text" name="title" id="title" defaultValue={selectedEvent.title} />
+                                    </label>
+                                    <label htmlFor="description">
+                                        Description:
+                                        <textarea name="description" id="description" defaultValue={selectedEvent.extendedProps.description} />
+                                    </label>
+                                    <label htmlFor="start">
+                                        Start:
+                                        <input 
+                                            type="datetime-local" 
+                                            name="start_time" 
+                                            id="start_time" 
+                                            defaultValue={selectedEvent && selectedEvent.start ? 
+                                                new Date(selectedEvent.start.getTime() - selectedEvent.start.getTimezoneOffset() * 60000)
+                                                    .toISOString()
+                                                    .slice(0, -8)
+                                                : ''} 
+                                        />
+                                    </label>
+                                    <label htmlFor="end">
+                                        End:
+                                        <input 
+                                            type="datetime-local" 
+                                            name="end_time" 
+                                            id="end_time" 
+                                            defaultValue={selectedEvent && selectedEvent.end ? 
+                                                new Date(selectedEvent.end.getTime() - selectedEvent.end.getTimezoneOffset() * 60000)
+                                                    .toISOString()
+                                                    .slice(0, -8)
+                                                : ''} 
+                                        />
+                                    </label>
+                                    <label htmlFor="location">
+                                        Location:
+                                        <input type="text" name="location" id="location" defaultValue={selectedEvent.extendedProps.location} />
+                                    </label>
+                                    <label htmlFor="backgroundColor">
+                                        Color:
+                                        <input type="color" name="eventcolor" id="eventcolor" defaultValue={selectedEvent._def.ui.backgroundColor}
+                                        />
+                                    </label>
 
-                        <label htmlFor="recurring">
-                            Recurring:
-                            <input type="checkbox" name="recurring" id="recurring" checked={selectedEvent.recurring}
-                                onChange={handleRecurringCheckboxChange}
-                            />
-                        </label>
-                        {showRecurringFields && (
-                            <>
-                                <label htmlFor="rruleFreq">
-                                    Frequency:
-                                    <select name="rruleFreq" id="rruleFreq" defaultValue={selectedEvent.rruleFreq}>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                        <option value="yearly">Yearly</option>
-                                    </select>
-                                </label>
-                                <label htmlFor="rruleUntil">
-                                    Until:
-                                    <input type="datetime-local" name="rruleUntil" id="rruleUntil" defaultValue={selectedEvent.rruleUntil}/>
-                                </label>
-                                <label htmlFor="rruleDtstart">
-                                    Start Date:
-                                    <input type="datetime-local" name="rruleDtstart" id="rruleDtstart" defaultValue={selectedEvent.rruleDtstart} />
-                                </label>
-                            </>
-                        )}
-                        <button type="submit">Update</button>
-                        <Button onClick={handleDeleteEvent} color="error">Delete</Button>
-                    </>
-                        )}
-                    </Form>
+                                    <label htmlFor="recurring">
+                                        Recurring:
+                                        <input type="checkbox" name="recurring" id="recurring" checked={selectedEvent.extendedProps.recurring} onChange={handleRecurringCheckboxChange} />
+                                    </label>
+                                    {showRecurringFields && (
+                                        <>
+                                            <label htmlFor="rruleFreq">
+                                                Frequency:
+                                                <select name="rruleFreq" id="rruleFreq" defaultValue={selectedEvent.rruleFreq}>
+                                                    <option value="weekly">Weekly</option>
+                                                    <option value="monthly">Monthly</option>
+                                                    <option value="yearly">Yearly</option>
+                                                </select>
+                                            </label>
+                                            <label htmlFor="rruleUntil">
+                                                Until:
+                                                <input 
+                                                    type="datetime-local" 
+                                                    name="rruleUntil" 
+                                                    id="rruleUntil" 
+                                                    defaultValue={selectedEvent && selectedEvent.rruleUntil ? 
+                                                        new Date(selectedEvent.rruleUntil.getTime() - selectedEvent.rruleUntil.getTimezoneOffset() * 60000)
+                                                            .toISOString()
+                                                            .slice(0, -8)
+                                                        : ''} 
+                                                />
+                                            </label>
+                                            <label htmlFor="rruleDtstart">
+                                                Start Date:
+                                                <input 
+                                                    type="datetime-local" 
+                                                    name="rruleDtstart" 
+                                                    id="rruleDtstart" 
+                                                    defaultValue={selectedEvent && selectedEvent.rruleDtstart ? 
+                                                        new Date(selectedEvent.rruleDtstart.getTime() - selectedEvent.rruleDtstart.getTimezoneOffset() * 60000)
+                                                            .toISOString()
+                                                            .slice(0, -8)
+                                                        : ''} 
+                                                />
+                                            </label>
+                                        </>
+                                    )}
+                                    <Button type="submit">Update</Button>
+                                    <Button onClick={handleDeleteEvent} color="error">Delete</Button>
+                                </>
+                            )}
+                        </Form>
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleCloseEventDialog} color="primary">Close</Button>
                     </DialogActions>
-            </Dialog>
+                </Dialog>
 
             </>
             )}
