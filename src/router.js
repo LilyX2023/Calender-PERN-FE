@@ -5,7 +5,7 @@ import {
 } from 'react-router-dom';
 import App from './App';
 import Landing from './pages/Calendar';
-import Event from './pages/Event'; // Import the Event component
+import Event from './pages/EditEventForm'; // Import the Event component
 import { calendarsLoader, eventLoader } from './loaders';
 import { createAction, deleteAction, updateAction } from "./actions";
 

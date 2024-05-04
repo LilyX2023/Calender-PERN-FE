@@ -101,24 +101,24 @@ const Landing = () => {
     };
 
     //Function to set up editing of a event
-// Now the handleEdit function should work with the eventDetails structured as needed:
-    const handleEdit = (event) => {
-        setUpdatedEventId(event.event_id);
-        setUpdatedTitle(event.title);
-        setUpdatedDescription(event.description);
-        setUpdatedStart(event.start.toISOString().slice(0, -8)); // Format for datetime-local
-        setUpdatedEnd(event.end.toISOString().slice(0, -8)); // Format for datetime-local
-        setUpdatedLocation(event.location);
-        setUpdatedEventcolor(event.backgroundColor || '#000000');
-        setUpdatedRecurring(event.recurring);
-
-        if (event.recurring && event.rrule) {
-            setUpdatedRruleFreq(event.rrule.freq);
-            setUpdatedRruleUntil(event.rrule.until);
-            setUpdatedRruleDtstart(event.rrule.dtstart);
-        }
-    };
-
+// Function to set up editing of an event
+const handleEdit = (event) => {
+    setSelectedEvent(event);  // Ensure you are setting the selected event
+    setUpdatedEventId(event.event_id);
+    setUpdatedTitle(event.title);
+    setUpdatedDescription(event.description);
+    setUpdatedStart(event.start.toISOString().slice(0, -8));  // Format for datetime-local input
+    setUpdatedEnd(event.end.toISOString().slice(0, -8));  // Format for datetime-local input
+    setUpdatedLocation(event.location);
+    setUpdatedEventcolor(event.backgroundColor || '#000000');
+    setUpdatedRecurring(event.recurring);
+    if (event.recurring) {
+        setUpdatedRruleFreq(event.rrule.freq);
+        setUpdatedRruleUntil(event.rrule.until);
+        setUpdatedRruleDtstart(event.rrule.dtstart);
+    }
+};
+    //update event
    // Update event
     const handleUpdateEvent = async (event_id) => {
         console.log('Selected Event:', selectedEvent);
@@ -212,26 +212,14 @@ const Landing = () => {
             }
         };
 
-
     // Event click handler
-    const handleEventClick = (info) => {
-        console.log('Selected Event:', info.event);
-        const eventDetails = {
-            event_id: info.event.id, // Assuming id is stored directly in the event object
-            title: info.event.title,
-            description: info.event.extendedProps.description, // Assuming description is stored in extendedProps
-            start: info.event.start,
-            end: info.event.end,
-            location: info.event.extendedProps.location,
-            backgroundColor: info.event.backgroundColor, // Ensure this matches how color is stored
-            recurring: info.event.extendedProps.recurring, // Assuming recurring status is stored in extendedProps
-            rrule: info.event.extendedProps.rrule // Assuming rrule details are stored in extendedProps
-        };
-
-        handleEdit(eventDetails);
+// Event click handler
+    const handleEventClick = (clickInfo) => {
+        console.log('Clicked Event:', clickInfo.event);
+        setSelectedEvent(clickInfo.event);
+        handleEdit(clickInfo.event);  // Call handleEdit with the event details
         setShowEventDialog(true);
     };
-
     // Toggle visibility of recurring fields
     const handleRecurringCheckboxChange = (e) => {
         const isChecked = e.target.checked;
