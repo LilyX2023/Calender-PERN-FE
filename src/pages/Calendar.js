@@ -107,8 +107,8 @@ const handleEdit = (event) => {
     setUpdatedEventId(event.event_id);
     setUpdatedTitle(event.title);
     setUpdatedDescription(event.description);
-    setUpdatedStart(event.start.toISOString().slice(0, -8));  // Format for datetime-local input
-    setUpdatedEnd(event.end.toISOString().slice(0, -8));  // Format for datetime-local input
+    setUpdatedStart(event.start ? new Date(event.start.getTime() - event.start.getTimezoneOffset() * 60000).toISOString().slice(0, -8) : '');
+    setUpdatedEnd(event.end ? new Date(event.end.getTime() - event.end.getTimezoneOffset() * 60000).toISOString().slice(0, -8) : '');    
     setUpdatedLocation(event.location);
     setUpdatedEventcolor(event.backgroundColor || '#000000');
     setUpdatedRecurring(event.recurring);
@@ -272,11 +272,11 @@ const handleEdit = (event) => {
                                 <>
                                     <label htmlFor="title">
                                         Title:
-                                        <input type="text" name="title" id="title" defaultValue={selectedEvent.title} onChange={(e) => setUpdatedTitle(e.target.value)}/>
+                                        <input type="text" name="title" id="title" value={updatedTitle} onChange={(e) => setUpdatedTitle(e.target.value)}/>
                                     </label>
                                     <label htmlFor="description">
                                         Description:
-                                        <textarea name="description" id="description" defaultValue={selectedEvent.extendedProps.description} onChange={(e) => setUpdatedDescription(e.target.value)}/>
+                                        <textarea name="description" id="description" value={updatedDescription} onChange={(e) => setUpdatedDescription(e.target.value)}/>
                                     </label>
                                     <label htmlFor="start">
                                         Start:
@@ -284,11 +284,7 @@ const handleEdit = (event) => {
                                             type="datetime-local" 
                                             name="start_time" 
                                             id="start_time" 
-                                            defaultValue={selectedEvent && selectedEvent.start ? 
-                                                new Date(selectedEvent.start.getTime() - selectedEvent.start.getTimezoneOffset() * 60000)
-                                                    .toISOString()
-                                                    .slice(0, -8)
-                                                : ''}
+                                            value={updatedStart_time}
                                                 onChange={(e) => setUpdatedStart(e.target.value)} 
                                         />
                                     </label>
@@ -298,29 +294,25 @@ const handleEdit = (event) => {
                                             type="datetime-local" 
                                             name="end_time" 
                                             id="end_time" 
-                                            defaultValue={selectedEvent && selectedEvent.end ? 
-                                                new Date(selectedEvent.end.getTime() - selectedEvent.end.getTimezoneOffset() * 60000)
-                                                    .toISOString()
-                                                    .slice(0, -8)
-                                                : ''} 
+                                            value={updatedEnd_time} 
                                                 onChange={(e) => setUpdatedEnd(e.target.value)} 
                                         />
                                     </label>
                                     <label htmlFor="location">
                                         Location:
-                                        <input type="text" name="location" id="location" defaultValue={selectedEvent.extendedProps.location}                                  
+                                        <input type="text" name="location" id="location" value={updatedLocation}                                  
                                         onChange={(e) => setUpdatedLocation(e.target.value)}/>
                                     </label>
                                     <label htmlFor="backgroundColor">
                                         Color:
-                                        <input type="color" name="eventcolor" id="eventcolor" defaultValue={selectedEvent._def.ui.backgroundColor}
+                                        <input type="color" name="eventcolor" id="eventcolor" value={updatedEventcolor}
                                         onChange={(e) => setUpdatedEventcolor(e.target.value)}
                                         />
                                     </label>
 
                                     <label htmlFor="recurring">
                                         Recurring:
-                                        <input type="checkbox" name="recurring" id="recurring" checked={selectedEvent.extendedProps.recurring}
+                                        <input type="checkbox" name="recurring" id="recurring" checked={updatedRecurring}
                                          onChange={(e) => {
                                             setUpdatedRecurring(e.target.checked); // Call setUpdatedRecurring with the checked value
                                             handleRecurringCheckboxChange(e); // Call handleRecurringCheckboxChange function
@@ -331,7 +323,7 @@ const handleEdit = (event) => {
                                         <>
                                             <label htmlFor="freq">
                                                 Frequency:
-                                                <select name="freq" id="freq" defaultValue={selectedEvent.selectedEvent._def.recurringDef.typeData.rruleSet._rrule.freq} 
+                                                <select name="freq" id="freq" value={updatedRruleFreq} 
                                                 onChange={(e) => setUpdatedRruleFreq(e.target.value)}>
                                                     <option value="weekly">Weekly</option>
                                                     <option value="monthly">Monthly</option>
@@ -344,13 +336,7 @@ const handleEdit = (event) => {
                                                     type="datetime-local" 
                                                     name="until" 
                                                     id="until" 
-                                                    defaultValue={selectedEvent && selectedEvent._def.recurringDef.typeData.
-                                                        rruleSet._rrule.until ? 
-                                                        new Date(selectedEvent._def.recurringDef.typeData.
-                                                            rruleSet._rrule.until.getTime() - selectedEvent._def.recurringDef.typeData.rruleSet._rrule.until.getTimezoneOffset() * 60000)
-                                                            .toISOString()
-                                                            .slice(0, -8)
-                                                        : ''} 
+                                                    value={updatedRruleUntil} 
                                                         onChange={(e) => setUpdatedRruleUntil(e.target.value)}
                                                 />
                                             </label>
@@ -360,19 +346,13 @@ const handleEdit = (event) => {
                                                     type="datetime-local" 
                                                     name="dtstart" 
                                                     id="dtstart" 
-                                                    defaultValue={selectedEvent && selectedEvent._def.recurringDef.typeData.
-                                                        rruleSet._rrule.dtstart ? 
-                                                        new Date(selectedEvent._def.recurringDef.typeData.
-                                                            rruleSet._rrule.dtstart.getTime() - selectedEvent._def.recurringDef.typeData.rruleSet._rrule.dtstart.getTimezoneOffset() * 60000)
-                                                            .toISOString()
-                                                            .slice(0, -8)
-                                                        : ''}
+                                                    value={updatedRruleDtstart}
                                                         onChange={(e) => setUpdatedRruleDtstart(e.target.value)}
                                                 />
                                             </label>
                                         </>
                                     )}
-                                    <Button onClick={() => handleUpdateEvent(selectedEvent.event_id)}>Update</Button>
+                                    <Button type="submit" onClick={() => handleUpdateEvent(selectedEvent.event_id)}>Update</Button>
                                     <Button onClick={handleDeleteEvent} color="error">Delete</Button>
                                 </>
                             )}
