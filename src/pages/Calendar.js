@@ -106,10 +106,10 @@ const handleEdit = (event) => {
     setSelectedEvent(event);  // Ensure you are setting the selected event
     setUpdatedEventId(event.event_id);
     setUpdatedTitle(event.title);
-    setUpdatedDescription(event.description);
+    setUpdatedDescription(event.extendedProps.description);
     setUpdatedStart(event.start ? new Date(event.start.getTime() - event.start.getTimezoneOffset() * 60000).toISOString().slice(0, -8) : '');
     setUpdatedEnd(event.end ? new Date(event.end.getTime() - event.end.getTimezoneOffset() * 60000).toISOString().slice(0, -8) : '');    
-    setUpdatedLocation(event.location);
+    setUpdatedLocation(event.extendedProps.location);
     setUpdatedEventcolor(event.backgroundColor || '#000000');
     setUpdatedRecurring(event.recurring);
     if (event.recurring) {
@@ -118,7 +118,7 @@ const handleEdit = (event) => {
         setUpdatedRruleDtstart(event.rrule.dtstart);
     }
 };
-    //update event
+
    // Update event
     const handleUpdateEvent = async (event_id) => {
         console.log('Selected Event:', selectedEvent);
@@ -237,7 +237,9 @@ const handleEdit = (event) => {
 
     return (
         <div>
-            <h3>Calendar</h3>
+        <h3 style={{ textAlign: 'center' }}>Calendar</h3>
+
+
             <select onChange={(e) => handleCalendarChange(e.target.value)}>
                 <option value="">Select a Calendar</option>
                 {calendars.slice(0).reverse().map(calendar => (
@@ -259,7 +261,7 @@ const handleEdit = (event) => {
                         center: 'title',
                         end: 'dayGridMonth,timeGridWeek,timeGridDay'
                     }}
-                    height={"90vh"}
+                    height={"85vh"}
                     events={events}
                     eventClick={handleEventClick} // Handle event click
                 />
