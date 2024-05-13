@@ -263,6 +263,7 @@ const handleEdit = (event) => {
                     }}
                     height={"85vh"}
                     events={events}
+                    eventColor={"#0394fc"}
                     eventClick={handleEventClick} // Handle event click
                 />
                 {/* Event dialog */}
